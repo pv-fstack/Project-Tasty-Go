@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Food — TastyGo</title>
+    <!-- Google Fonts: Space Grotesk & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <span class="brand-icon">⚡</span>
+                <span class="brand-text">Tasty<span class="brand-accent">Go</span></span>
+            </a>
+
+            <div class="nav-links">
+                <a href="index.html" class="nav-item active">
+                    <i class="fa-solid fa-utensils"></i> Order Menu
+                </a>
+                <a href="kitchen.html" class="nav-item">
+                    <i class="fa-solid fa-fire-burner"></i> Kitchen KDS
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="hero-header">
+            <h1 class="hero-title">Delicious Eats at TastyGo ⚡🍔</h1>
+            <p class="hero-subtitle">Place your order & track its live status on your personal phone screen!</p>
+        </div>
+
+        <div id="menuContainer">
+            <!-- Rendered dynamically by JS -->
+        </div>
+    </main>
+
+    <!-- Floating Cart Bar -->
+    <div id="floatingCart" class="floating-cart-bar hidden">
+        <div>
+            <div style="font-weight: 700; font-size: 1.1rem;" id="cartSummaryText">0 Items Selected</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);" id="cartTotalText">Total: ₹0</div>
+        </div>
+        <button class="btn-add" style="padding: 0.75rem 1.5rem; font-size: 1rem; border-radius: 30px;" onclick="openCartModal()">
+            Review & Checkout <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <span><i class="fa-solid fa-bag-shopping"></i> Checkout Order</span>
+                <button onclick="closeCartModal()" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </h2>
+            
+            <div id="modalCartItems" style="max-height: 220px; overflow-y: auto; margin-bottom: 1.5rem;">
+                <!-- Rendered dynamically by JS -->
+            </div>
+
+            <form id="orderForm" onsubmit="handlePlaceOrder(event)">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">Your Name / Student ID</label>
+                    <input type="text" id="customerName" placeholder="e.g. Rahul (Roll #104)" required style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: white;">
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem;">Special Notes (Optional)</label>
+                    <input type="text" id="orderNotes" placeholder="e.g. Less spicy, extra sauce" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: white;">
+                </div>
+
+                <button type="submit" id="btnSubmitOrder" class="btn-add" style="width: 100%; justify-content: center; padding: 1rem; font-size: 1.1rem; border-radius: 12px;">
+                    🔥 Confirm & Generate Live Ticket
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p>⚡ TastyGo Live Queue — Personal Mobile Order Tracker</p>
+        </div>
+    </footer>
+
+    <script src="js/audio.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+    const menuData = [
+        {
+            category: "Burgers & Rolls",
+            icon: "🍔",
+            items: [
+                { id: 1, name: "Crispy Veg Cheese Burger", price: 89.00, desc: "Spicy potato patty with double cheese & lettuce", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80", prep: 8 },
+                { id: 2, name: "Steamed Momos", price: 110.00, desc: "Hot and steamed momos with spicy dip", image: "https://images.unsplash.com/photo-1626776876729-bab4369a5a5a?auto=format&fit=crop&w=600&q=80", prep: 10 }
+            ]
+        },
+        {
+            category: "Cold Beverages",
+            icon: "🥤",
+            items: [
+                { id: 3, name: "Thick Cold Coffee with Ice Cream", price: 75.00, desc: "Creamy espresso blended with chocolate ice cream", image: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=400&q=80", prep: 4 },
+                { id: 4, name: "Mint Lemonade Cooler", price: 45.00, desc: "Fresh lemon, crushed mint and soda", image: "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80", prep: 3 }
+            ]
+        },
+        {
+            category: "Quick Snacks",
+            icon: "🍟",
+            items: [
+                { id: 5, name: "Peri Peri French Fries", price: 70.00, desc: "Golden crispy fries sprinkled with African peri-peri spice", image: "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=400&q=80", prep: 6 },
+                { id: 6, name: "Bombay Veg Grill Sandwich", price: 95.00, desc: "Triple layer sandwich packed with veggies, butter & cheese", image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=400&q=80", prep: 7 }
+            ]
+        },
+        {
+            category: "Main Course Meals",
+            icon: "🍛",
+            items: [
+                { id: 7, name: "Chinese Veg Hakka Noodles", price: 120.00, desc: "Wok tossed noodles with fresh veggies and soy sauce", image: "https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=400&q=80", prep: 12 }
+            ]
+        }
+    ];
+
+    let cart = {};
+
+    function renderMenu() {
+        const container = document.getElementById('menuContainer');
+        container.innerHTML = '';
+
+        menuData.forEach(cat => {
+            let html = `
+                <h2 class="category-title">
+                    <span>${cat.icon}</span> ${cat.category}
+                </h2>
+                <div class="menu-grid">
+            `;
+
+            cat.items.forEach(item => {
+                const qty = cart[item.id] ? cart[item.id].quantity : 0;
+                let btnHtml = '';
+                
+                if (qty > 0) {
+                    btnHtml = `
+                        <div class="qty-control-pill">
+                            <button class="btn-qty-step" onclick="changeQty(${item.id}, -1, '${item.name.replace(/'/g, "\\'")}', ${item.price})"><i class="fa-solid fa-minus"></i></button>
+                            <span class="qty-count">${qty}</span>
+                            <button class="btn-qty-step" onclick="changeQty(${item.id}, 1, '${item.name.replace(/'/g, "\\'")}', ${item.price})"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    `;
+                } else {
+                    btnHtml = `
+                        <button class="btn-add" onclick="changeQty(${item.id}, 1, '${item.name.replace(/'/g, "\\'")}', ${item.price})">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                    `;
+                }
+
+                html += `
+                    <div class="food-card">
+                        <div class="food-img-wrapper">
+                            <img src="${item.image}" alt="${item.name}" class="food-img">
+                            <span class="prep-badge"><i class="fa-regular fa-clock"></i> ~${item.prep} mins</span>
+                        </div>
+                        <div class="food-info">
+                            <h3 class="food-name">${item.name}</h3>
+                            <p class="food-desc">${item.desc}</p>
+                            <div class="food-footer">
+                                <span class="food-price">₹${item.price.toFixed(2)}</span>
+                                <div id="btn-container-${item.id}">
+                                    ${btnHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML += html;
+        });
+    }
+
+    function changeQty(id, delta, name, price) {
+        if (window.notifier) window.notifier.initAudio();
+
+        if (!cart[id]) {
+            cart[id] = { id, name, price, quantity: 0 };
+        }
+
+        cart[id].quantity += delta;
+
+        if (cart[id].quantity <= 0) {
+            delete cart[id];
+        }
+
+        renderMenu();
+        updateCartUI();
+        if (document.getElementById('checkoutModal').classList.contains('active')) {
+            renderModalItems();
+        }
+    }
+
+    function updateCartUI() {
+        const floating = document.getElementById('floatingCart');
+        const items = Object.values(cart);
+        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+        const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+        if (totalItems > 0) {
+            floating.classList.remove('hidden');
+            document.getElementById('cartSummaryText').innerText = `${totalItems} Item${totalItems > 1 ? 's' : ''} Selected`;
+            document.getElementById('cartTotalText').innerText = `Total: ₹${totalPrice.toFixed(2)}`;
+        } else {
+            floating.classList.add('hidden');
+            closeCartModal();
+        }
+    }
+
+    function renderModalItems() {
+        const container = document.getElementById('modalCartItems');
+        container.innerHTML = '';
+        const items = Object.values(cart);
+
+        if (items.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Your cart is empty.</p>';
+            return;
+        }
+
+        items.forEach(item => {
+            const sub = item.price * item.quantity;
+            container.innerHTML += `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <div>
+                        <div style="font-weight: 600;">${item.name}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">₹${item.price.toFixed(2)} each</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <div class="qty-control-pill" style="padding: 0.2rem 0.3rem;">
+                            <button class="btn-qty-step" style="width:24px; height:24px;" onclick="changeQty(${item.id}, -1, '${item.name.replace(/'/g, "\\'")}', ${item.price})"><i class="fa-solid fa-minus"></i></button>
+                            <span class="qty-count">${item.quantity}</span>
+                            <button class="btn-qty-step" style="width:24px; height:24px;" onclick="changeQty(${item.id}, 1, '${item.name.replace(/'/g, "\\'")}', ${item.price})"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                        <div style="font-weight: 700; color: #ffffff; min-width: 60px; text-align: right;">₹${sub.toFixed(2)}</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function openCartModal() {
+        renderModalItems();
+        document.getElementById('checkoutModal').classList.add('active');
+    }
+
+    function closeCartModal() {
+        document.getElementById('checkoutModal').classList.remove('active');
+    }
+
+    function handlePlaceOrder(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitOrder');
+        btn.disabled = true;
+        btn.innerText = "Generating your Live Token...";
+
+        const customerName = document.getElementById('customerName').value;
+        const notes = document.getElementById('orderNotes').value;
+        const cartItems = Object.values(cart);
+
+        const newOrder = window.TastyGoApp.createOrder(customerName, cartItems, notes);
+        
+        setTimeout(() => {
+            window.location.href = `track.html?token=${newOrder.token}`;
+        }, 300);
+    }
+
+    // Initialize menu
+    document.addEventListener('DOMContentLoaded', () => {
+        renderMenu();
+    });
+    </script>
+</body>
+</html>

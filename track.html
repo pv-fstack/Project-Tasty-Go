@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Ticket Tracker — TastyGo</title>
+    <!-- Google Fonts: Space Grotesk & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="brand">
+                <span class="brand-icon">⚡</span>
+                <span class="brand-text">Tasty<span class="brand-accent">Go</span></span>
+            </a>
+
+            <div class="nav-links">
+                <a href="index.html" class="nav-item">
+                    <i class="fa-solid fa-utensils"></i> Order Menu
+                </a>
+                <a href="kitchen.html" class="nav-item">
+                    <i class="fa-solid fa-fire-burner"></i> Kitchen KDS
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="ticket-wrapper">
+            <div class="live-ticket">
+                <div class="ticket-header">
+                    <div class="token-label">Your Live Personal Token</div>
+                    <div class="token-number" id="tokenDisplay">TK-100</div>
+                    <div class="customer-info">
+                        <span><i class="fa-solid fa-user"></i> <span id="customerName">Student</span></span> &bull; 
+                        <span id="orderTime"><i class="fa-regular fa-clock"></i> --:--</span>
+                    </div>
+                </div>
+
+                <!-- Animated Progress Stepper -->
+                <div class="stepper">
+                    <div class="stepper-progress" id="stepperProgress" style="width: 25%;"></div>
+                    
+                    <div class="step active completed" id="stepPlaced">
+                        <div class="step-circle"><i class="fa-solid fa-receipt"></i></div>
+                        <div class="step-label">Placed</div>
+                    </div>
+
+                    <div class="step" id="stepPreparing">
+                        <div class="step-circle"><i class="fa-solid fa-fire-burner"></i></div>
+                        <div class="step-label">Preparing</div>
+                    </div>
+
+                    <div class="step" id="stepReady">
+                        <div class="step-circle"><i class="fa-solid fa-bell"></i></div>
+                        <div class="step-label">Ready</div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Status Banner -->
+                <div class="status-banner" id="statusBanner">
+                    <h2 class="status-title" id="statusTitle">⏳ Order Placed & Sent to Kitchen</h2>
+                    <p class="status-desc" id="statusDesc">Please relax! Your order will move to 'Preparing' shortly.</p>
+                </div>
+
+                <!-- Order Items Summary -->
+                <div class="order-summary-box">
+                    <div style="font-weight: 700; margin-bottom: 0.8rem; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">
+                        <i class="fa-solid fa-list-check"></i> Order Summary
+                    </div>
+                    <div id="orderItemsContainer">
+                        <!-- Rendered by JS -->
+                    </div>
+                    <div class="summary-item" style="border-top: 1px dashed rgba(255,255,255,0.15); margin-top: 0.5rem; padding-top: 0.8rem; font-weight: 800; font-size: 1.1rem; color: white;">
+                        <span>Total Amount Paid</span>
+                        <span id="totalPriceDisplay">₹0.00</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+                    <i class="fa-solid fa-wifi" style="color: var(--accent-emerald);"></i> Connected to Multi-Tab Live Stream
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <p>⚡ TastyGo Live Queue — Personal Mobile Order Tracker</p>
+        </div>
+    </footer>
+
+    <script src="js/audio.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+    let currentToken = null;
+    let currentStatus = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        currentToken = urlParams.get('token') || 'TK-104';
+
+        loadOrderData();
+        setupSoundButton();
+
+        // Listen for real-time BroadcastChannel updates from Kitchen tab
+        window.TastyGoApp.onSyncEvent((eventData) => {
+            if (eventData.type === 'STATUS_UPDATE' && eventData.token === currentToken) {
+                updateUI(eventData.status);
+            } else if (eventData.type === 'RESET_DEFAULTS' || eventData.type === 'STORAGE_CHANGE') {
+                loadOrderData();
+            }
+        });
+    });
+
+    function setupSoundButton() {
+        const btn = document.createElement('button');
+        btn.id = 'enableSoundBtn';
+        btn.innerHTML = '🔔 Sound Alerts: Tap to Test';
+        btn.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:999; padding:12px 18px; border-radius:30px; border:1px solid rgba(255,255,255,0.2); background:linear-gradient(135deg, #10b981 0%, #059669 100%); color:white; font-weight:700; font-size:0.88rem; cursor:pointer; box-shadow:0 10px 25px rgba(16,185,129,0.4); transition:all 0.3s ease;';
+        document.body.appendChild(btn);
+
+        btn.addEventListener('click', () => {
+            if (window.notifier) {
+                window.notifier.initAudio();
+                window.notifier.playReadyChime(); // test bell chime!
+            }
+            btn.innerHTML = '✅ Sound Alerts Active';
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.borderColor = 'var(--accent-emerald)';
+            btn.style.color = 'var(--accent-emerald)';
+        });
+    }
+
+    function loadOrderData() {
+        const order = window.TastyGoApp.getOrder(currentToken);
+        if (!order) {
+            document.getElementById('tokenDisplay').innerText = "Not Found";
+            return;
+        }
+
+        document.getElementById('tokenDisplay').innerText = order.token;
+        document.getElementById('customerName').innerText = order.customer_name;
+        document.getElementById('orderTime').innerHTML = `<i class="fa-regular fa-clock"></i> ${order.created_at || 'Just now'}`;
+        document.getElementById('totalPriceDisplay').innerText = `₹${order.total_price.toFixed(2)}`;
+
+        const container = document.getElementById('orderItemsContainer');
+        container.innerHTML = '';
+        order.items.forEach(item => {
+            container.innerHTML += `
+                <div class="summary-item">
+                    <span>${item.quantity}x ${item.name}</span>
+                    <span style="font-weight: 600;">₹${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            `;
+        });
+
+        updateUI(order.status);
+    }
+
+    function updateUI(status) {
+        if (status === currentStatus) return;
+        
+        // If status changed to READY, play chime sound!
+        if (status === 'READY' && currentStatus && window.notifier) {
+            window.notifier.playReadyChime();
+        }
+
+        currentStatus = status;
+        const percentage = window.TastyGoApp.getStatusPercentage(status);
+        document.getElementById('stepperProgress').style.width = `${percentage}%`;
+
+        const stepPlaced = document.getElementById('stepPlaced');
+        const stepPrep = document.getElementById('stepPreparing');
+        const stepReady = document.getElementById('stepReady');
+
+        stepPlaced.className = 'step active completed';
+        stepPrep.className = (status === 'PREPARING' || status === 'READY' || status === 'COLLECTED') ? (status === 'READY' || status === 'COLLECTED' ? 'step active completed' : 'step active') : 'step';
+        stepReady.className = (status === 'READY' || status === 'COLLECTED') ? (status === 'COLLECTED' ? 'step active completed' : 'step active') : 'step';
+
+        const banner = document.getElementById('statusBanner');
+        const title = document.getElementById('statusTitle');
+        const desc = document.getElementById('statusDesc');
+
+        if (status === 'READY') {
+            banner.className = 'status-banner ready';
+            title.innerHTML = `🎉 Order #${currentToken} is READY!`;
+            desc.innerText = "Please come up to Counter #1 to pick up your order!";
+        } else if (status === 'PREPARING') {
+            banner.className = 'status-banner';
+            title.innerHTML = `👨‍🍳 Chef is Preparing Your Meal`;
+            desc.innerText = "Food is sizzlin' on the stove. Your phone will buzz when ready!";
+        } else if (status === 'COLLECTED') {
+            banner.className = 'status-banner';
+            title.innerHTML = `✅ Order Picked Up & Enjoy!`;
+            desc.innerText = "Thank you for dining at TastyGo!";
+        } else {
+            banner.className = 'status-banner';
+            title.innerHTML = `⏳ Order Placed & Sent to Kitchen`;
+            desc.innerText = "Please relax! Your order will move to 'Preparing' shortly.";
+        }
+    }
+    </script>
+</body>
+</html>
